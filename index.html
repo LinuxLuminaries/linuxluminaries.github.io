@@ -1,0 +1,135 @@
+<!DOCTYPE HTML>
+<html xmlns="http://www.w3.org/1999/xhtml"xml:lang="en"lang="en">
+
+<head>
+	<style>
+		a:link {
+			text-decoration: none;
+		}
+
+		a:visited {
+			text-decoration: none;
+		}
+
+		a:hover {
+			text-decoration: none;
+		}
+
+		a:active {
+			text-decoration: none;
+		}
+	</style>
+	<title>HBD AVI😘</title>
+	<meta http-equiv="content-type"content="text/html; charset=UTF-8">
+	<style type="text/css">
+		@font-face {
+			font-family: digit;
+			src: url('digital-7_mono.ttf') format("truetype");
+		}
+	</style>
+	<link href="css/default.css"type="text/css"rel="stylesheet">
+	<link href="css/btn.css"type="text/css"rel="stylesheet">
+	<script type="text/javascript"src="js/jquery.js"></script>
+	<script type="text/javascript"src="js/garden.js"></script>
+	<script type="text/javascript"src="js/functions.js"></script>
+</head>
+
+<body>
+	<div id="mainDiv">
+		<audio id="audioPlayer" autoplay>
+			<source src="audio.mp3" type="audio/mp3">
+			Your browser does not support the audio element.
+		</audio> 	
+		<div id="content">
+			<div id="code">
+				<span class="comments">/**</span><br/>
+				<span class="space"/><span class="comments">Your smile lights up the world, my love for you will
+					always stay,</span><br />
+				<span class="space"/><span class="comments">Happy birthday, my heart, in every possible
+					way!.</span><br />
+					<span class="comments">**/</span><br/>
+					<br>
+				<span class="keyword"></span>Love You</span>(<span class="string">"Avi"</span>);<br />
+				<span class="comments">// Dec 21, 2024, Happiest Birthday Love❤️. </span><br />
+				<br></span>
+				<span class="comments">OLD, GOLD AND PERFECT❤️ Happiest Birthday <span class="keyword">Avi😘</span>
+					Thanks for always sticking around for me, You know that you means <span class="keyword">world</span>
+					to me you’re the best, don’t let anyone make you believe
+					otherwise, The <span class="keyword">memories</span> we have made already are unforgettable and I will keep making unforgettable
+						memories with you <span class="keyword">my love</span>. Ever since we met you’ve completed me. I’m the luckiest to get to call
+					you <span class="keyword">mine!!!</span> Love you more for the little things
+						you do everyday!! Distance will <span class="keyword">pass</span> & i will <span
+						class="keyword">hug</span> you soon🥺<br/>
+				<br>
+				<span class="placeholder"/><span class="comments">// It's Important Day</span><br />
+				<span class="placeholder"/><span class="comments">// be blessed and happy.</span><br />
+			</div>  
+			<div style="position: fixed; bottom: 20px; width: 100%; text-align: center;">
+				<button onclick="window.location.href='gallery.html'">Way to Love Gallery</button>
+			</div>
+			
+			<div id="loveHeart">
+				<canvas id="garden"></canvas>
+				<div id="words">
+					<div id="messages">
+						Hey, Love! Happiest Birthday To You
+						<div id="elapseClock"></div>
+					</div>
+					<div id="loveu">
+						Love u forever and ever.<br />
+						<div class="signature"><a href='https://www.instagram.com/n_eesha11/'>- Nisha</a></div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+	<script type="text/javascript">
+		var offsetX = $("#loveHeart").width() / 2;
+		var offsetY = $("#loveHeart").height() / 2 - 55;
+		var together = new Date();
+		together.setFullYear(2024, 11, 21);
+		together.setHours(0o0);
+		together.setMinutes(0);
+		together.setSeconds(0);
+		together.setMilliseconds(0);
+
+		if (!document.createElement('canvas').getContext) {
+			var msg = document.createElement("div");
+			msg.id = "errorMsg";
+			msg.innerHTML = "Your browser doesn't support HTML5!<br/>Recommend use Chrome 14+/IE 9+/Firefox 7+/Safari 4+";
+			document.body.appendChild(msg);
+			$("#code").css("display", "none")
+			$("#copyright").css("position", "absolute");
+			$("#copyright").css("bottom", "10px");
+			document.execCommand("stop");
+		} else {
+			setTimeout(function () {
+				startHeartAnimation();
+			}, 5000);
+
+			timeElapse(together);
+			setInterval(function () {
+				timeElapse(together);
+			}, 500);
+
+			adjustCodePosition();
+			$("#code").typewriter();
+		}
+	</script>
+<script>
+	window.onload = function() {
+		// Ensure the audio element is available before trying to play it
+		var audio = document.getElementById('audioPlayer');
+		
+		if (audio) {  // Check if the element exists
+			audio.play().catch(function(error) {
+				console.log("Autoplay blocked, please interact with the page.");
+				// Optionally, you can show a play button here if needed
+			});
+		} else {
+			console.log('Audio element not found');
+		}
+	};
+</script>
+</body>
+</html>
