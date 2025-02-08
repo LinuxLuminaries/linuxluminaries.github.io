@@ -19,16 +19,24 @@
     .dark-mode .text-gray-700 {
       color: #d1d5db;
     }
+    .progress-bar {
+      transition: width 0.3s ease-in-out;
+    }
   </style>
 </head>
 <body class="bg-gray-100 text-gray-700">
-  <div id="app" class="p-6">
+  <div id="app" class="p-6 max-w-4xl mx-auto">
     <!-- Header -->
     <header class="flex justify-between items-center mb-6">
       <h1 class="text-2xl font-bold">Security Test Manager</h1>
-      <button id="toggle-dark-mode" class="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300 dark-mode:bg-gray-700 dark-mode:hover:bg-gray-600">
-        Toggle Dark Mode
-      </button>
+      <div class="flex gap-2">
+        <button id="toggle-dark-mode" class="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300 dark-mode:bg-gray-700 dark-mode:hover:bg-gray-600">
+          Toggle Dark Mode
+        </button>
+        <button id="clear-storage-btn" class="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600">
+          Clear Local Storage
+        </button>
+      </div>
     </header>
 
     <!-- Application Management -->
@@ -41,6 +49,20 @@
       <ul id="app-list" class="space-y-2"></ul>
     </section>
 
+    <!-- Export/Import Buttons -->
+    <div class="flex gap-2 mb-4">
+      <button id="export-btn" class="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600">Export Data</button>
+      <label for="import-file" class="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 cursor-pointer">
+        Import Data
+      </label>
+      <input id="import-file" type="file" accept=".json" class="hidden" />
+    </div>
+
+    <!-- Progress Bar -->
+    <div class="w-full bg-gray-200 rounded-full h-4 mb-4">
+      <div id="progress-bar" class="progress-bar bg-blue-500 h-4 rounded-full" style="width: 0%"></div>
+    </div>
+
     <!-- Vulnerability Checklist -->
     <section>
       <h2 class="text-xl font-semibold mb-2">Vulnerability Checklist</h2>
@@ -50,160 +72,224 @@
       <div id="vulnerability-checklist" class="space-y-4"></div>
     </section>
   </div>
-<script>
 
-// Initialize data storage
-const STORAGE_KEY = 'securityTestManagerData';
-let data = JSON.parse(localStorage.getItem(STORAGE_KEY)) || { apps: [], vulnerabilities: {}, appTests: {} };
+  <script>
+    // Initialize data storage
+    const STORAGE_KEY = 'securityTestManagerData';
+    let data = JSON.parse(localStorage.getItem(STORAGE_KEY)) || { apps: [], vulnerabilities: {}, appTests: {} };
 
-// DOM Elements
-const appNameInput = document.getElementById('app-name-input');
-const addAppBtn = document.getElementById('add-app-btn');
-const appList = document.getElementById('app-list');
-const vulnerabilityChecklist = document.getElementById('vulnerability-checklist');
-const toggleDarkModeBtn = document.getElementById('toggle-dark-mode');
-const searchVulnerabilitiesInput = document.getElementById('search-vulnerabilities');
+    // DOM Elements
+    const appNameInput = document.getElementById('app-name-input');
+    const addAppBtn = document.getElementById('add-app-btn');
+    const appList = document.getElementById('app-list');
+    const vulnerabilityChecklist = document.getElementById('vulnerability-checklist');
+    const toggleDarkModeBtn = document.getElementById('toggle-dark-mode');
+    const searchVulnerabilitiesInput = document.getElementById('search-vulnerabilities');
+    const exportBtn = document.getElementById('export-btn');
+    const importFileInput = document.getElementById('import-file');
+    const clearStorageBtn = document.getElementById('clear-storage-btn');
 
-// Prepopulate OWASP-based vulnerability checklist
-const defaultVulnerabilities = {
-  "Injection Attacks": ["SQL Injection", "NoSQL Injection", "Command Injection"],
-  "Authentication & Authorization Issues": ["Default Credentials", "Broken Authentication", "Session Fixation"],
-  "Security Misconfigurations": ["Exposed Admin Panels", "Unrestricted CORS", "Debug Mode Enabled"],
-  "Insecure Storage & Data Exposure": ["Sensitive Data in URLs", "Hardcoded API Keys", "Information Disclosure"],
-  "Access Control & Privilege Escalation": ["IDOR", "Missing Role-Based Access Control (RBAC)", "Overly Permissive API Access"],
-  "Denial of Service (DoS) & Rate Limiting Issues": ["No Rate Limit on OTP", "API Abuse"]
-};
+    // Prepopulate OWASP-based vulnerability checklist
+    const defaultVulnerabilities = {
+      "Injection Attacks": ["SQL Injection", "NoSQL Injection", "Command Injection"],
+      "Authentication & Authorization Issues": ["Default Credentials", "Broken Authentication", "Session Fixation"],
+      "Security Misconfigurations": ["Exposed Admin Panels", "Unrestricted CORS", "Debug Mode Enabled"],
+      "Insecure Storage & Data Exposure": ["Sensitive Data in URLs", "Hardcoded API Keys", "Information Disclosure"],
+      "Access Control & Privilege Escalation": ["IDOR", "Missing Role-Based Access Control (RBAC)", "Overly Permissive API Access"],
+      "Denial of Service (DoS) & Rate Limiting Issues": ["No Rate Limit on OTP", "API Abuse"]
+    };
 
-// Render Functions
-function renderApps() {
-  appList.innerHTML = '';
-  data.apps.forEach((app, index) => {
-    const li = document.createElement('li');
-    li.className = `flex justify-between items-center px-4 py-2 ${data.selectedApp === app ? 'bg-blue-100' : 'bg-white'} rounded shadow cursor-pointer`;
-    li.innerHTML = `
-      <span>${app}</span>
-      <button class="px-2 py-1 bg-red-500 text-white rounded hover:bg-red-600" onclick="deleteApp(${index})">Delete</button>
-    `;
-    li.onclick = () => selectApp(app);
-    appList.appendChild(li);
-  });
-}
+    // Render Functions
+    function renderApps() {
+      appList.innerHTML = '';
+      data.apps.forEach((app, index) => {
+        const li = document.createElement('li');
+        li.className = `flex justify-between items-center px-4 py-2 ${data.selectedApp === app ? 'bg-blue-100' : 'bg-white'} rounded shadow cursor-pointer`;
+        li.innerHTML = `
+          <span>${app}</span>
+          <button class="px-2 py-1 bg-red-500 text-white rounded hover:bg-red-600" onclick="deleteApp(${index})">Delete</button>
+        `;
+        li.onclick = () => selectApp(app);
+        appList.appendChild(li);
+      });
+    }
 
-function renderVulnerabilities() {
-  vulnerabilityChecklist.innerHTML = '';
-  const searchTerm = searchVulnerabilitiesInput.value.toLowerCase();
-  Object.entries(data.vulnerabilities).forEach(([category, subcategories]) => {
-    const filteredSubcategories = subcategories.filter(sub => sub.toLowerCase().includes(searchTerm));
-    if (filteredSubcategories.length === 0) return;
+    function renderVulnerabilities() {
+      vulnerabilityChecklist.innerHTML = '';
+      const searchTerm = searchVulnerabilitiesInput.value.toLowerCase();
+      Object.entries(data.vulnerabilities).forEach(([category, subcategories]) => {
+        const filteredSubcategories = subcategories.filter(sub => sub.toLowerCase().includes(searchTerm));
+        if (filteredSubcategories.length === 0) return;
 
-    const categoryDiv = document.createElement('div');
-    categoryDiv.className = 'bg-white p-4 rounded shadow';
-    categoryDiv.innerHTML = `
-      <h3 class="text-lg font-semibold mb-2 cursor-pointer" onclick="toggleCollapse(this)">
-        ${category}
-      </h3>
-      <ul class="space-y-2 hidden">
-        ${filteredSubcategories.map(sub => {
-          const status = data.appTests[data.selectedApp]?.[sub] || 'Not Tested';
-          return `
-            <li class="flex justify-between items-center">
-              <label class="flex items-center">
-                <select class="mr-2 px-2 py-1 border rounded" onchange="updateStatus('${sub}', this.value)">
-                  <option value="Not Tested" ${status === 'Not Tested' ? 'selected' : ''}>Not Tested</option>
-                  <option value="Passed" ${status === 'Passed' ? 'selected' : ''}>Passed</option>
-                  <option value="Failed" ${status === 'Failed' ? 'selected' : ''}>Failed</option>
-                </select>
-                ${sub}
-              </label>
-              <button class="px-2 py-1 bg-red-500 text-white rounded hover:bg-red-600" onclick="deleteSubcategory('${category}', '${sub}')">Delete</button>
-            </li>
-          `;
-        }).join('')}
-      </ul>
-      <div class="mt-2">
-        <input type="text" placeholder="Add subcategory" class="px-2 py-1 border rounded w-full" onkeypress="if(event.key === 'Enter') addSubcategory('${category}', this.value)" />
-      </div>
-    `;
-    vulnerabilityChecklist.appendChild(categoryDiv);
-  });
-}
+        const categoryDiv = document.createElement('div');
+        categoryDiv.className = 'bg-white p-4 rounded shadow';
+        categoryDiv.innerHTML = `
+          <h3 class="text-lg font-semibold mb-2 cursor-pointer flex items-center" onclick="toggleCollapse(this)">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2 transition-transform transform rotate-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+            </svg>
+            ${category}
+          </h3>
+          <ul class="space-y-2 hidden">
+            ${filteredSubcategories.map(sub => {
+              const status = data.appTests[data.selectedApp]?.[sub] || 'Not Tested';
+              return `
+                <li class="flex justify-between items-center">
+                  <label class="flex items-center">
+                    <select class="mr-2 px-2 py-1 border rounded" onchange="updateStatus('${sub}', this.value)">
+                      <option value="Not Tested" ${status === 'Not Tested' ? 'selected' : ''}>Not Tested</option>
+                      <option value="Passed" ${status === 'Passed' ? 'selected' : ''}>Passed</option>
+                      <option value="Failed" ${status === 'Failed' ? 'selected' : ''}>Failed</option>
+                    </select>
+                    ${sub}
+                  </label>
+                  <button class="px-2 py-1 bg-red-500 text-white rounded hover:bg-red-600" onclick="deleteSubcategory('${category}', '${sub}')">Delete</button>
+                </li>
+              `;
+            }).join('')}
+          </ul>
+          <div class="mt-2">
+            <input type="text" placeholder="Add subcategory" class="px-2 py-1 border rounded w-full" onkeypress="if(event.key === 'Enter') addSubcategory('${category}', this.value)" />
+          </div>
+        `;
+        vulnerabilityChecklist.appendChild(categoryDiv);
+      });
 
-// Event Handlers
-addAppBtn.addEventListener('click', () => {
-  const appName = appNameInput.value.trim();
-  if (appName) {
-    data.apps.push(appName);
-    appNameInput.value = '';
-    saveData();
-    renderApps();
-  }
-});
+      // Update progress bar after rendering vulnerabilities
+      updateProgressBar();
+    }
 
-function deleteApp(index) {
-  data.apps.splice(index, 1);
-  if (data.selectedApp === data.apps[index]) data.selectedApp = null;
-  saveData();
-  renderApps();
-  renderVulnerabilities();
-}
+    // Event Handlers
+    addAppBtn.addEventListener('click', () => {
+      const appName = appNameInput.value.trim();
+      if (appName) {
+        data.apps.push(appName);
+        appNameInput.value = '';
+        saveData();
+        renderApps();
+      }
+    });
 
-function selectApp(app) {
-  data.selectedApp = app;
-  if (!data.appTests[app]) data.appTests[app] = {};
-  saveData();
-  renderApps();
-  renderVulnerabilities();
-}
+    function deleteApp(index) {
+      data.apps.splice(index, 1);
+      if (data.selectedApp === data.apps[index]) data.selectedApp = null;
+      saveData();
+      renderApps();
+      renderVulnerabilities();
+    }
 
-function toggleCollapse(header) {
-  const ul = header.nextElementSibling;
-  ul.classList.toggle('hidden');
-}
+    function selectApp(app) {
+      data.selectedApp = app;
+      if (!data.appTests[app]) data.appTests[app] = {};
+      saveData();
+      renderApps();
+      renderVulnerabilities();
+    }
 
-function addSubcategory(category, subcategory) {
-  if (!data.vulnerabilities[category]) data.vulnerabilities[category] = [];
-  data.vulnerabilities[category].push(subcategory);
-  saveData();
-  renderVulnerabilities();
-}
+    function toggleCollapse(header) {
+      const svg = header.querySelector('svg');
+      const ul = header.nextElementSibling;
+      ul.classList.toggle('hidden');
+      svg.classList.toggle('rotate-180');
+    }
 
-function deleteSubcategory(category, subcategory) {
-  data.vulnerabilities[category] = data.vulnerabilities[category].filter(sub => sub !== subcategory);
-  saveData();
-  renderVulnerabilities();
-}
+    function addSubcategory(category, subcategory) {
+      if (!data.vulnerabilities[category]) data.vulnerabilities[category] = [];
+      data.vulnerabilities[category].push(subcategory);
+      saveData();
+      renderVulnerabilities();
+    }
 
-function updateStatus(subcategory, status) {
-  if (!data.appTests[data.selectedApp]) data.appTests[data.selectedApp] = {};
-  data.appTests[data.selectedApp][subcategory] = status;
-  saveData();
-}
+    function deleteSubcategory(category, subcategory) {
+      data.vulnerabilities[category] = data.vulnerabilities[category].filter(sub => sub !== subcategory);
+      saveData();
+      renderVulnerabilities();
+    }
 
-toggleDarkModeBtn.addEventListener('click', () => {
-  document.body.classList.toggle('dark-mode');
-});
+    function updateStatus(subcategory, status) {
+      if (!data.appTests[data.selectedApp]) data.appTests[data.selectedApp] = {};
+      data.appTests[data.selectedApp][subcategory] = status;
+      saveData();
+      renderVulnerabilities();
+    }
 
-searchVulnerabilitiesInput.addEventListener('input', () => {
-  renderVulnerabilities();
-});
+    toggleDarkModeBtn.addEventListener('click', () => {
+      document.body.classList.toggle('dark-mode');
+    });
 
-// Save Data to Local Storage
-function saveData() {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
-}
+    searchVulnerabilitiesInput.addEventListener('input', () => {
+      renderVulnerabilities();
+    });
 
-// Initialize App
-function init() {
-  if (Object.keys(data.vulnerabilities).length === 0) {
-    data.vulnerabilities = defaultVulnerabilities;
-    saveData();
-  }
-  renderApps();
-  renderVulnerabilities();
-}
+    // Save Data to Local Storage
+    function saveData() {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+    }
 
-init();
-</script>
-  <!-- <script src="app.js" defer></script> -->
+    // Progress Tracking
+    function updateProgressBar() {
+      if (!data.selectedApp) return;
+
+      const appTests = data.appTests[data.selectedApp] || {};
+      const total = Object.values(data.vulnerabilities).flat().length;
+      const completed = Object.values(appTests).filter(status => status !== 'Not Tested').length;
+      const percentage = Math.round((completed / total) * 100);
+
+      document.getElementById('progress-bar').style.width = `${percentage}%`;
+    }
+
+    // Export/Import Functionality
+    exportBtn.addEventListener('click', () => {
+      const jsonData = JSON.stringify(data, null, 2);
+      const blob = new Blob([jsonData], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'security-test-data.json';
+      a.click();
+    });
+
+    importFileInput.addEventListener('change', (event) => {
+      const file = event.target.files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          try {
+            const importedData = JSON.parse(e.target.result);
+            data = importedData;
+            saveData();
+            renderApps();
+            renderVulnerabilities();
+            alert('Data imported successfully!');
+          } catch (error) {
+            alert('Invalid JSON file.');
+          }
+        };
+        reader.readAsText(file);
+      }
+    });
+
+    // Clear Local Storage
+    clearStorageBtn.addEventListener('click', () => {
+      if (confirm('Are you sure you want to clear all local storage? This action cannot be undone.')) {
+        localStorage.removeItem(STORAGE_KEY);
+        data = { apps: [], vulnerabilities: {}, appTests: {} };
+        renderApps();
+        renderVulnerabilities();
+      }
+    });
+
+    // Initialize App
+    function init() {
+      if (Object.keys(data.vulnerabilities).length === 0) {
+        data.vulnerabilities = defaultVulnerabilities;
+        saveData();
+      }
+      renderApps();
+      renderVulnerabilities();
+    }
+
+    init();
+  </script>
 </body>
 </html>
