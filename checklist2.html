@@ -63,6 +63,15 @@
       <div id="progress-bar" class="progress-bar bg-blue-500 h-4 rounded-full" style="width: 0%"></div>
     </div>
 
+    <!-- Add Main Vulnerability -->
+    <section class="mb-6">
+      <h2 class="text-xl font-semibold mb-2">Add New Vulnerability Category</h2>
+      <div class="flex gap-2 mb-4">
+        <input id="main-vulnerability-input" type="text" placeholder="Enter main vulnerability category" class="flex-grow px-4 py-2 border rounded">
+        <button id="add-main-vulnerability-btn" class="px-4 py-2 bg-purple-500 text-white rounded hover:bg-purple-600">Add Category</button>
+      </div>
+    </section>
+
     <!-- Vulnerability Checklist -->
     <section>
       <h2 class="text-xl font-semibold mb-2">Vulnerability Checklist</h2>
@@ -88,15 +97,101 @@
     const exportBtn = document.getElementById('export-btn');
     const importFileInput = document.getElementById('import-file');
     const clearStorageBtn = document.getElementById('clear-storage-btn');
+    const mainVulnerabilityInput = document.getElementById('main-vulnerability-input');
+    const addMainVulnerabilityBtn = document.getElementById('add-main-vulnerability-btn');
 
     // Prepopulate OWASP-based vulnerability checklist
     const defaultVulnerabilities = {
-      "Injection Attacks": ["SQL Injection", "NoSQL Injection", "Command Injection"],
-      "Authentication & Authorization Issues": ["Default Credentials", "Broken Authentication", "Session Fixation"],
-      "Security Misconfigurations": ["Exposed Admin Panels", "Unrestricted CORS", "Debug Mode Enabled"],
-      "Insecure Storage & Data Exposure": ["Sensitive Data in URLs", "Hardcoded API Keys", "Information Disclosure"],
-      "Access Control & Privilege Escalation": ["IDOR", "Missing Role-Based Access Control (RBAC)", "Overly Permissive API Access"],
-      "Denial of Service (DoS) & Rate Limiting Issues": ["No Rate Limit on OTP", "API Abuse"]
+      "Injection Attacks": [
+        "SQL Injection", 
+        "NoSQL Injection", 
+        "Command Injection", 
+        "LDAP Injection", 
+        "XPath Injection"
+      ],
+      "Authentication & Authorization Issues": [
+        "Default Credentials", 
+        "Broken Authentication", 
+        "Session Fixation", 
+        "Weak Password Policies", 
+        "Insecure Token Generation"
+      ],
+      "Security Misconfigurations": [
+        "Exposed Admin Panels", 
+        "Unrestricted CORS", 
+        "Debug Mode Enabled", 
+        "Directory Listing Enabled", 
+        "Unused Services Running"
+      ],
+      "Insecure Storage & Data Exposure": [
+        "Sensitive Data in URLs", 
+        "Hardcoded API Keys", 
+        "Information Disclosure", 
+        "Unencrypted Sensitive Data", 
+        "Improper Error Handling"
+      ],
+      "Access Control & Privilege Escalation": [
+        "IDOR (Insecure Direct Object Reference)", 
+        "Missing Role-Based Access Control (RBAC)", 
+        "Overly Permissive API Access", 
+        "Privilege Escalation", 
+        "Unauthorized Access to Resources"
+      ],
+      "Denial of Service (DoS) & Rate Limiting Issues": [
+        "No Rate Limit on OTP", 
+        "API Abuse", 
+        "Resource Exhaustion", 
+        "Large File Uploads", 
+        "Slowloris Attack"
+      ],
+      "Cross-Site Scripting (XSS)": [
+        "Stored XSS", 
+        "Reflected XSS", 
+        "DOM-based XSS", 
+        "Blind XSS", 
+        "mXSS (Mutation-based XSS)"
+      ],
+      "Cross-Site Request Forgery (CSRF)": [
+        "CSRF in Forms", 
+        "CSRF in APIs", 
+        "Token Validation Bypass", 
+        "SameSite Cookie Misconfiguration"
+      ],
+      "Server-Side Request Forgery (SSRF)": [
+        "Internal Network Exposure", 
+        "Metadata Service Exploitation", 
+        "Bypassing SSRF Protections"
+      ],
+      "File Upload Vulnerabilities": [
+        "Unrestricted File Upload", 
+        "Malicious File Execution", 
+        "Path Traversal via File Upload", 
+        "File Type Validation Bypass"
+      ],
+      "Cryptography Issues": [
+        "Weak Encryption Algorithms", 
+        "Hardcoded Encryption Keys", 
+        "Improper Key Management", 
+        "Insecure Random Number Generation"
+      ],
+      "Third-Party Library Vulnerabilities": [
+        "Outdated Libraries", 
+        "Known Vulnerable Components", 
+        "Supply Chain Attacks", 
+        "Unpatched Dependencies"
+      ],
+      "Logging & Monitoring Failures": [
+        "Insufficient Logging", 
+        "Lack of Monitoring", 
+        "Log Injection", 
+        "Excessive Logging of Sensitive Data"
+      ],
+      "Business Logic Flaws": [
+        "Price Manipulation", 
+        "Bypassing Payment Gateways", 
+        "Abuse of Functionality", 
+        "Race Conditions"
+      ]
     };
 
     // Render Functions
@@ -276,6 +371,21 @@
         data = { apps: [], vulnerabilities: {}, appTests: {} };
         renderApps();
         renderVulnerabilities();
+      }
+    });
+
+    // Add Main Vulnerability Category
+    addMainVulnerabilityBtn.addEventListener('click', () => {
+      const categoryName = mainVulnerabilityInput.value.trim();
+      if (categoryName) {
+        if (!data.vulnerabilities[categoryName]) {
+          data.vulnerabilities[categoryName] = [];
+          saveData();
+          renderVulnerabilities();
+        } else {
+          alert('Category already exists.');
+        }
+        mainVulnerabilityInput.value = '';
       }
     });
 
