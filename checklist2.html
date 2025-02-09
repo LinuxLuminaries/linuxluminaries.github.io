@@ -22,6 +22,22 @@
     .progress-bar {
       transition: width 0.3s ease-in-out;
     }
+    .info-icon {
+      cursor: pointer;
+      color: #6366f1;
+    }
+    .note-input {
+      border: 1px solid #cbd5e0;
+      border-radius: 0.375rem;
+      padding: 0.5rem;
+      width: 100%;
+      resize: none;
+    }
+    .note-input:focus {
+      outline: none;
+      border-color: #6366f1;
+      box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
+    }
   </style>
 </head>
 <body class="bg-gray-100 text-gray-700">
@@ -85,7 +101,7 @@
   <script>
     // Initialize data storage
     const STORAGE_KEY = 'securityTestManagerData';
-    let data = JSON.parse(localStorage.getItem(STORAGE_KEY)) || { apps: [], vulnerabilities: {}, appTests: {} };
+    let data = JSON.parse(localStorage.getItem(STORAGE_KEY)) || { apps: [], vulnerabilities: {}, appTests: {}, notes: {} };
 
     // DOM Elements
     const appNameInput = document.getElementById('app-name-input');
@@ -103,94 +119,13 @@
     // Prepopulate OWASP-based vulnerability checklist
     const defaultVulnerabilities = {
       "Injection Attacks": [
-        "SQL Injection", 
-        "NoSQL Injection", 
-        "Command Injection", 
-        "LDAP Injection", 
-        "XPath Injection"
+        { name: "SQL Injection", info: "Occurs when malicious SQL queries are injected into input fields.", tools: ["SQLMap", "Burp Suite"] },
+        { name: "NoSQL Injection", info: "Exploits NoSQL databases by injecting malicious queries.", tools: ["NoSQLMap", "Burp Suite"] },
+        { name: "Command Injection", info: "Executes arbitrary commands on the host OS via vulnerable inputs.", tools: ["OWASP ZAP", "Burp Suite"] }
       ],
       "Authentication & Authorization Issues": [
-        "Default Credentials", 
-        "Broken Authentication", 
-        "Session Fixation", 
-        "Weak Password Policies", 
-        "Insecure Token Generation"
-      ],
-      "Security Misconfigurations": [
-        "Exposed Admin Panels", 
-        "Unrestricted CORS", 
-        "Debug Mode Enabled", 
-        "Directory Listing Enabled", 
-        "Unused Services Running"
-      ],
-      "Insecure Storage & Data Exposure": [
-        "Sensitive Data in URLs", 
-        "Hardcoded API Keys", 
-        "Information Disclosure", 
-        "Unencrypted Sensitive Data", 
-        "Improper Error Handling"
-      ],
-      "Access Control & Privilege Escalation": [
-        "IDOR (Insecure Direct Object Reference)", 
-        "Missing Role-Based Access Control (RBAC)", 
-        "Overly Permissive API Access", 
-        "Privilege Escalation", 
-        "Unauthorized Access to Resources"
-      ],
-      "Denial of Service (DoS) & Rate Limiting Issues": [
-        "No Rate Limit on OTP", 
-        "API Abuse", 
-        "Resource Exhaustion", 
-        "Large File Uploads", 
-        "Slowloris Attack"
-      ],
-      "Cross-Site Scripting (XSS)": [
-        "Stored XSS", 
-        "Reflected XSS", 
-        "DOM-based XSS", 
-        "Blind XSS", 
-        "mXSS (Mutation-based XSS)"
-      ],
-      "Cross-Site Request Forgery (CSRF)": [
-        "CSRF in Forms", 
-        "CSRF in APIs", 
-        "Token Validation Bypass", 
-        "SameSite Cookie Misconfiguration"
-      ],
-      "Server-Side Request Forgery (SSRF)": [
-        "Internal Network Exposure", 
-        "Metadata Service Exploitation", 
-        "Bypassing SSRF Protections"
-      ],
-      "File Upload Vulnerabilities": [
-        "Unrestricted File Upload", 
-        "Malicious File Execution", 
-        "Path Traversal via File Upload", 
-        "File Type Validation Bypass"
-      ],
-      "Cryptography Issues": [
-        "Weak Encryption Algorithms", 
-        "Hardcoded Encryption Keys", 
-        "Improper Key Management", 
-        "Insecure Random Number Generation"
-      ],
-      "Third-Party Library Vulnerabilities": [
-        "Outdated Libraries", 
-        "Known Vulnerable Components", 
-        "Supply Chain Attacks", 
-        "Unpatched Dependencies"
-      ],
-      "Logging & Monitoring Failures": [
-        "Insufficient Logging", 
-        "Lack of Monitoring", 
-        "Log Injection", 
-        "Excessive Logging of Sensitive Data"
-      ],
-      "Business Logic Flaws": [
-        "Price Manipulation", 
-        "Bypassing Payment Gateways", 
-        "Abuse of Functionality", 
-        "Race Conditions"
+        { name: "Default Credentials", info: "Systems left with default usernames and passwords.", tools: ["Nmap", "Hydra"] },
+        { name: "Broken Authentication", info: "Flaws in authentication mechanisms allow attackers to bypass login.", tools: ["Burp Suite", "OWASP ZAP"] }
       ]
     };
 
@@ -213,7 +148,7 @@
       vulnerabilityChecklist.innerHTML = '';
       const searchTerm = searchVulnerabilitiesInput.value.toLowerCase();
       Object.entries(data.vulnerabilities).forEach(([category, subcategories]) => {
-        const filteredSubcategories = subcategories.filter(sub => sub.toLowerCase().includes(searchTerm));
+        const filteredSubcategories = subcategories.filter(sub => sub.name.toLowerCase().includes(searchTerm));
         if (filteredSubcategories.length === 0) return;
 
         const categoryDiv = document.createElement('div');
@@ -224,21 +159,27 @@
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
             </svg>
             ${category}
+            <button class="ml-2 info-icon" onclick="showInfo('${category}', 'Category-level information not available.')">(i)</button>
           </h3>
           <ul class="space-y-2 hidden">
             ${filteredSubcategories.map(sub => {
-              const status = data.appTests[data.selectedApp]?.[sub] || 'Not Tested';
+              const status = data.appTests[data.selectedApp]?.[sub.name] || 'Not Tested';
+              const note = data.notes[sub.name] || '';
               return `
-                <li class="flex justify-between items-center">
-                  <label class="flex items-center">
-                    <select class="mr-2 px-2 py-1 border rounded" onchange="updateStatus('${sub}', this.value)">
-                      <option value="Not Tested" ${status === 'Not Tested' ? 'selected' : ''}>Not Tested</option>
-                      <option value="Passed" ${status === 'Passed' ? 'selected' : ''}>Passed</option>
-                      <option value="Failed" ${status === 'Failed' ? 'selected' : ''}>Failed</option>
-                    </select>
-                    ${sub}
-                  </label>
-                  <button class="px-2 py-1 bg-red-500 text-white rounded hover:bg-red-600" onclick="deleteSubcategory('${category}', '${sub}')">Delete</button>
+                <li class="flex flex-col space-y-2">
+                  <div class="flex justify-between items-center">
+                    <label class="flex items-center">
+                      <select class="mr-2 px-2 py-1 border rounded" onchange="updateStatus('${sub.name}', this.value)">
+                        <option value="Not Tested" ${status === 'Not Tested' ? 'selected' : ''}>Not Tested</option>
+                        <option value="Passed" ${status === 'Passed' ? 'selected' : ''}>Passed</option>
+                        <option value="Failed" ${status === 'Failed' ? 'selected' : ''}>Failed</option>
+                      </select>
+                      ${sub.name}
+                      <button class="ml-2 info-icon" onclick="showInfo('${sub.name}', '${sub.info}', '${sub.tools.join(', ')}')">(i)</button>
+                    </label>
+                    <button class="px-2 py-1 bg-red-500 text-white rounded hover:bg-red-600" onclick="deleteSubcategory('${category}', '${sub.name}')">Delete</button>
+                  </div>
+                  <textarea class="note-input" placeholder="Add personal notes..." oninput="saveNote('${sub.name}', this.value)">${note}</textarea>
                 </li>
               `;
             }).join('')}
@@ -290,13 +231,13 @@
 
     function addSubcategory(category, subcategory) {
       if (!data.vulnerabilities[category]) data.vulnerabilities[category] = [];
-      data.vulnerabilities[category].push(subcategory);
+      data.vulnerabilities[category].push({ name: subcategory, info: "No description available.", tools: [] });
       saveData();
       renderVulnerabilities();
     }
 
     function deleteSubcategory(category, subcategory) {
-      data.vulnerabilities[category] = data.vulnerabilities[category].filter(sub => sub !== subcategory);
+      data.vulnerabilities[category] = data.vulnerabilities[category].filter(sub => sub.name !== subcategory);
       saveData();
       renderVulnerabilities();
     }
@@ -306,6 +247,15 @@
       data.appTests[data.selectedApp][subcategory] = status;
       saveData();
       renderVulnerabilities();
+    }
+
+    function saveNote(subcategory, note) {
+      data.notes[subcategory] = note;
+      saveData();
+    }
+
+    function showInfo(name, info, tools = "") {
+      alert(`Vulnerability: ${name}\n\nDescription: ${info}\n\nTools: ${tools}`);
     }
 
     toggleDarkModeBtn.addEventListener('click', () => {
@@ -368,7 +318,7 @@
     clearStorageBtn.addEventListener('click', () => {
       if (confirm('Are you sure you want to clear all local storage? This action cannot be undone.')) {
         localStorage.removeItem(STORAGE_KEY);
-        data = { apps: [], vulnerabilities: {}, appTests: {} };
+        data = { apps: [], vulnerabilities: {}, appTests: {}, notes: {} };
         renderApps();
         renderVulnerabilities();
       }
