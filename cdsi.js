@@ -1,1 +1,1 @@
-alert("---------💀CDSI IS POSSIBLE💀---------")
+alert("Cross Domain Script Include")
